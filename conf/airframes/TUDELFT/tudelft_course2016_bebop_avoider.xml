@@ -49,12 +49,12 @@
     </load>
 
     <load name="orange_avoider.xml"/>
--->
-	<load name="blob_tracker.xml"/>	
 
-<!--
-	<load name="monocular_avoidance.xml"/>	
+	<load name="blob_tracker.xml"/>	
 -->
+
+	<load name="monocular_avoidance.xml"/>	
+
     <load name="video_rtp_stream.xml">
       <define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>
       <define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="2"/>
