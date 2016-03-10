@@ -27,6 +27,7 @@
 #define BLOB_TRACKER_H
 
 #include <stdint.h>
+#include "lib/vision/image.h"
 
  extern void blob_tracker_init(void);
  

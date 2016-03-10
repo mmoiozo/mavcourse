@@ -27,6 +27,8 @@
 #include "modules/blob_tracker/blob_tracker.h"
 #include <stdio.h>
 #include <std.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 // OpenCV libraries
@@ -36,11 +38,11 @@
 //#include "opencv/cxcore.h"
 
 // Filter Settings
-uint8_t color_lum_min = 105;
+uint8_t color_lum_min = 5;
 uint8_t color_lum_max = 205;
-uint8_t color_cb_min  = 52;
-uint8_t color_cb_max  = 140;
-uint8_t color_cr_min  = 180;
+uint8_t color_cb_min  = 5;
+uint8_t color_cb_max  = 180;
+uint8_t color_cr_min  = 50;
 uint8_t color_cr_max  = 255;
 
 uint16_t x_pos = 0;

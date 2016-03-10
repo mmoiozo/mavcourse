@@ -10,7 +10,7 @@
   <header>
     <file name="monocular_avoidance.h"/>
   </header>
-  <init fun="void monocular_avoidance(void)"/>
+  <init fun="monocular_avoidance()"/>
   <makefile>
     <file name="monocular_avoidance.c"/>
     

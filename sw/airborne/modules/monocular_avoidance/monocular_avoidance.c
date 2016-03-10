@@ -50,18 +50,35 @@
 struct opticflow_result_t *result;
 //struct opticflow_t *opticflow;
 
+
+// Filter Settings
+uint8_t color_lum_min = 5;
+uint8_t color_lum_max = 205;
+uint8_t color_cb_min  = 5;
+uint8_t color_cb_max  = 200;
+uint8_t color_cr_min  = 5;
+uint8_t color_cr_max  = 230;
+
+int color_count = 0;
+
 bool_t process_frame(struct image_t* img);
 bool_t process_frame(struct image_t* img)
 {
+  // Filter
+  color_count = image_yuv422_colorfilt(img,img,
+      color_lum_min,color_lum_max,
+      color_cb_min,color_cb_max,
+      color_cr_min,color_cr_max
+      );
   
   // *************************************************************************************
   // Corner detection
   // *************************************************************************************
-
+/*
   // FAST corner detection (TODO: non fixed threshold)
   struct point_t *corners = fast9_detect(img, OPTICFLOW_FAST9_THRESHOLD, OPTICFLOW_FAST9_MIN_DISTANCE,
                                          20, 20, &result->corner_cnt);
-
+*/
   /*
   // Adaptive threshold
   if (opticflow->fast9_adaptive) {
@@ -74,9 +91,9 @@ bool_t process_frame(struct image_t* img)
     }
   }
 */
-  image_show_points(img, corners, result->corner_cnt);
+ // image_show_points(img, corners, result->corner_cnt);
 //int32_t debug = result->corner_cnt;
-int32_t debug = img->h;
+int32_t debug = 10;//img->h;
   
   DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug);
   return FALSE;
