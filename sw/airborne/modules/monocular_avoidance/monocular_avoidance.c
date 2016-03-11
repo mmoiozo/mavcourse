@@ -134,6 +134,8 @@ bool_t process_frame(struct image_t* img)
   //image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
   
   int32_t vector_debug = vectors[0].flow_x;
+  
+  //stateGetPositionEnu_f()->x;
 
  // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug);
   return FALSE;
