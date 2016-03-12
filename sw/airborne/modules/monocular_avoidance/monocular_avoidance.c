@@ -89,6 +89,16 @@ bool_t process_frame(struct image_t* img);
 bool_t process_frame(struct image_t* img)
 {
   
+  
+  // Convert image to grayscale
+  image_to_grayscale(img, &opticflow.img_gray);
+
+  // Copy to previous image if not set
+  if (!opticflow.got_first_img) {
+    image_copy(&opticflow.img_gray, &opticflow.prev_img_gray);
+    opticflow.got_first_img = TRUE;
+  }
+  
   // *************************************************************************************
   // Corner detection
   // *************************************************************************************
@@ -108,7 +118,7 @@ bool_t process_frame(struct image_t* img)
     }
   }
   
-  image_show_points(img, corners, result.corner_cnt);
+  //image_show_points(img, corners, result.corner_cnt);
   int32_t debug = result.corner_cnt;
  //int32_t debug = 10;//img->h;
   
@@ -131,9 +141,9 @@ bool_t process_frame(struct image_t* img)
                                        opticflow.window_size / 2, opticflow.subpixel_factor, opticflow.max_iterations,
                                        opticflow.threshold_vec, opticflow.max_track_corners);
 
-  //image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
+  image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
   
-  int32_t vector_debug = vectors[0].flow_x;
+  //int32_t vector_debug = vectors[0].flow_x;
   
   //stateGetPositionEnu_f()->x;
 
@@ -148,9 +158,14 @@ bool_t process_frame(struct image_t* img)
    /* Create the image buffers */
   image_create(&opticflow.img_gray, 272, 272, IMAGE_GRAYSCALE);
   image_create(&opticflow.prev_img_gray, 272, 272, IMAGE_GRAYSCALE);
+  
+  /* Create the image buffers */
+  //image_create(opticflow.img_gray, 272, 272, IMAGE_GRAYSCALE);
+  //image_create(opticflow.prev_img_gray, 272, 272, IMAGE_GRAYSCALE);
    
    /* Set the default values */
    
+   opticflow.got_first_img = FALSE;
   opticflow.max_track_corners = OPTICFLOW_MAX_TRACK_CORNERS;
   opticflow.window_size = OPTICFLOW_WINDOW_SIZE;
   opticflow.window_size = OPTICFLOW_WINDOW_SIZE;
