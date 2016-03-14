@@ -35,8 +35,23 @@
 #include "lib/vision/lucas_kanade.h"
 #include "lib/vision/fast_rosten.h"
 
+//state 
+#include "state.h"
+#include "subsystems/imu.h"
+
+// Calculations
+#include <math.h>
+#include "subsystems/ins/ins_int.h" // used for ins.sonar_z
+#include "boards/ardrone/navdata.h" // for ultrasound Height
+
+//coordinates
+#include "math/pprz_geodetic_double.h"
+#include "math/pprz_algebra_double.h"
+#include "subsystems/gps/gps_datalink.h"
+
+
 #ifndef OPTICFLOW_FAST9_THRESHOLD
-#define OPTICFLOW_FAST9_THRESHOLD 20//10//20//5
+#define OPTICFLOW_FAST9_THRESHOLD 50//10//20//5
 #endif
 
 #ifndef OPTICFLOW_FAST9_MIN_DISTANCE
@@ -85,6 +100,17 @@ uint8_t color_cr_max  = 230;
 
 int color_count = 0;
 
+//Attitude
+int32_t phi_temp = 0;
+int32_t theta_temp = 0;
+int32_t psi_temp = 0;
+
+//Position
+int32_t x_temp = 0;
+int32_t y_temp = 0;
+int32_t z_temp = 0;
+
+
 bool_t process_frame(struct image_t* img);
 bool_t process_frame(struct image_t* img)
 {
@@ -118,11 +144,20 @@ bool_t process_frame(struct image_t* img)
     }
   }
   
-  //image_show_points(img, corners, result.corner_cnt);
-  int32_t debug = result.corner_cnt;
- //int32_t debug = 10;//img->h;
+  image_show_points(img, corners, result.corner_cnt);
   
-  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug);
+  //int32_t debug = result.corner_cnt;
+  int32_t debug_tr = opticflow.fast9_threshold;
+  phi_temp = ANGLE_BFP_OF_REAL(stateGetNedToBodyEulers_f()->phi);
+  theta_temp = ANGLE_BFP_OF_REAL(stateGetNedToBodyEulers_f()->theta);
+  psi_temp = ANGLE_BFP_OF_REAL(stateGetNedToBodyEulers_f()->psi);
+  x_temp = POS_BFP_OF_REAL(stateGetPositionEnu_f()->x);
+  y_temp = POS_BFP_OF_REAL(stateGetPositionEnu_f()->y);
+  z_temp = POS_BFP_OF_REAL(stateGetPositionEnu_f()->z);
+ 
+ int32_t debug = img->h;
+  
+  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
   
   // Check if we found some corners to track
   if (result.corner_cnt < 1) {
@@ -141,7 +176,7 @@ bool_t process_frame(struct image_t* img)
                                        opticflow.window_size / 2, opticflow.subpixel_factor, opticflow.max_iterations,
                                        opticflow.threshold_vec, opticflow.max_track_corners);
 
-  image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
+  //image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
   
   //int32_t vector_debug = vectors[0].flow_x;
   
