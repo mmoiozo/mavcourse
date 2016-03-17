@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 int opencv_example(char* img, int width, int height);
+int derotation_test(char* img, int width, int height, float theta, float phi, float psi, float theta_prev, float phi_prev, float psi_prev);
 
 #ifdef __cplusplus
 }

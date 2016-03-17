@@ -31,7 +31,10 @@
 using namespace std;
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
 using namespace cv;
+
+#include <cmath>
 
 
 int opencv_example(char* img, int width, int height)
@@ -50,6 +53,58 @@ int opencv_example(char* img, int width, int height)
 	// Canny edges, only works with grayscale image
 	int edgeThresh=35;
 	Canny(image, image, edgeThresh, edgeThresh*3);
+
+	// Convert back to YUV422, and put it in place of the original image
+	for (int row=0; row <height; row++){
+		for (int col=0; col <width; col++){
+			img[(row*width+col)*2+1] = image.at<uint8_t>(row,col);
+			img[(row*width+col)*2] = 127;
+		}
+	}
+	return 0;
+}
+
+int derotation_test(char* img, int width, int height, float theta, float phi, float psi, float theta_prev, float phi_prev, float psi_prev)
+{
+	// Create a new image, using the original bebop image.
+	Mat M(width,height, CV_8UC2, img);
+	Mat image;
+	vector<Point2f> corner;
+	vector<Point2f> corner_prev;
+	// If you want a color image, uncomment this line
+	// cvtColor(M, image, CV_YUV2RGB_Y422);
+	// For a grayscale image, use this one
+	cvtColor(M, image, CV_YUV2GRAY_Y422);
+
+	int max_points = 10;
+	int x = 0;
+        int y = 0;
+	int x_prev = 0;
+        int y_prev = 0;
+	float divergence = 0;
+	float x_focal = 100;//?
+	float y_focal = 100;//?
+	int x_total = 0;
+	int y_total = 0;
+	
+	for (int i=0; i <max_points; i++)
+	{
+	 x = corner[i].x-(width/2);
+         y = corner[i].y-(height/2);
+	 x_prev = corner_prev[i].x-(width/2);
+         y_prev = corner_prev[i].y-(height/2);
+	 
+	 //optional distortion correction here 
+	 
+	float x_angle = atan((float)x/x_focal);
+	float y_angle = atan((float)y/y_focal);
+	 
+	 int u = x - x_prev;
+	 int v = y - y_prev;
+	 x_total += u;
+	 y_total += v;
+	}
+	
 
 	// Convert back to YUV422, and put it in place of the original image
 	for (int row=0; row <height; row++){
