@@ -51,7 +51,7 @@
 
 
 #ifndef OPTICFLOW_FAST9_THRESHOLD
-#define OPTICFLOW_FAST9_THRESHOLD 50//10//20//5
+#define OPTICFLOW_FAST9_THRESHOLD 30//10//20//5
 #endif
 
 #ifndef OPTICFLOW_FAST9_MIN_DISTANCE
@@ -63,15 +63,15 @@
 #endif
 
 #ifndef OPTICFLOW_MAX_TRACK_CORNERS
-#define OPTICFLOW_MAX_TRACK_CORNERS 25
+#define OPTICFLOW_MAX_TRACK_CORNERS 25//50
 #endif
 
 #ifndef OPTICFLOW_WINDOW_SIZE
-#define OPTICFLOW_WINDOW_SIZE 10
+#define OPTICFLOW_WINDOW_SIZE 10//20
 #endif
 
 #ifndef OPTICFLOW_MAX_ITERATIONS
-#define OPTICFLOW_MAX_ITERATIONS 10
+#define OPTICFLOW_MAX_ITERATIONS 10//20
 #endif
 
 #ifndef OPTICFLOW_THRESHOLD_VEC
@@ -146,7 +146,7 @@ bool_t process_frame(struct image_t* img)
   
   image_show_points(img, corners, result.corner_cnt);
   
-  //int32_t debug = result.corner_cnt;
+  int32_t debug = result.corner_cnt;
   int32_t debug_tr = opticflow.fast9_threshold;
   phi_temp = ANGLE_BFP_OF_REAL(stateGetNedToBodyEulers_f()->phi);
   theta_temp = ANGLE_BFP_OF_REAL(stateGetNedToBodyEulers_f()->theta);
@@ -155,9 +155,10 @@ bool_t process_frame(struct image_t* img)
   y_temp = POS_BFP_OF_REAL(stateGetPositionEnu_f()->y);
   z_temp = POS_BFP_OF_REAL(stateGetPositionEnu_f()->z);
  
- int32_t debug = img->h;
+ //int32_t debug = img->h;
   
   DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
+  
   
   // Check if we found some corners to track
   if (result.corner_cnt < 1) {
@@ -183,6 +184,7 @@ bool_t process_frame(struct image_t* img)
   //stateGetPositionEnu_f()->x;
 
  // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug);
+ 
   return FALSE;
 }
 
@@ -193,6 +195,10 @@ bool_t process_frame(struct image_t* img)
    /* Create the image buffers */
   image_create(&opticflow.img_gray, 272, 272, IMAGE_GRAYSCALE);
   image_create(&opticflow.prev_img_gray, 272, 272, IMAGE_GRAYSCALE);
+  
+  /* Create the image buffers */
+  //image_create(&opticflow.img_gray, 400, 400, IMAGE_GRAYSCALE);
+  //image_create(&opticflow.prev_img_gray, 400, 400, IMAGE_GRAYSCALE);
   
   /* Create the image buffers */
   //image_create(opticflow.img_gray, 272, 272, IMAGE_GRAYSCALE);
