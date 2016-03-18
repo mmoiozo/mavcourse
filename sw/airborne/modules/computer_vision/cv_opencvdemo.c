@@ -49,8 +49,8 @@ bool_t opencv_func(struct image_t* img)
   if (img->type == IMAGE_YUV422)
   {
     // Call OpenCV (C++ from paparazzi C function)
-    //opencv_example((char*) img->buf, img->w, img->h);
-    derotation_test((char*) img->buf, img->w, img->h, theta, phi, psi, theta_prev, phi_prev, psi_prev);
+    opencv_example((char*) img->buf, img->w, img->h);
+    //derotation_test((char*) img->buf, img->w, img->h, theta, phi, psi, theta_prev, phi_prev, psi_prev);
   }
 
   theta_prev = theta;
