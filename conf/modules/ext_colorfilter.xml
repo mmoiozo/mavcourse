@@ -1,0 +1,16 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="ext_colorfilter">
+  <doc>
+    <description>ext_colorfilter</description>
+  </doc>
+  <depends>video_thread</depends>
+  <header>
+    <file name="ext_colorfilter.h"/>
+  </header>
+  <init fun="ext_colorfilter_init()"/>
+  <makefile>
+    <file name="ext_colorfilter.c"/>
+  </makefile>
+</module>
+
