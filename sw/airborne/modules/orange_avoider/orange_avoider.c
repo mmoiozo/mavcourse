@@ -11,14 +11,24 @@
  */
 
 #include "modules/orange_avoider/orange_avoider.h"
-#include "modules/computer_vision/colorfilter.h"
+//#include "modules/computer_vision/colorfilter.h"
+#include "modules/ext_colorfilter/ext_colorfilter.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "state.h"
 #include <time.h>
 #include <stdlib.h>
 
 uint8_t safeToGoForwards=FALSE;
-int tresholdColorCount = 200;
+
+// Set all tresholds!!!
+float tresholdOrange_lcnt = 0.5;
+float tresholdOrange_clcnt = 0.5;
+float tresholdOrange_crcnt = 0.5;
+float tresholdOrange_rcnt = 0.5;
+float tresholdavg_lcnt = 0.5;
+float tresholdavg_clcnt = 0.75;
+float tresholdavg_crcnt = 0.75;
+float tresholdavg_rcnt = 0.5;
 int32_t incrementForAvoidance;
 
 void orange_avoider_init() {
@@ -36,8 +46,20 @@ void orange_avoider_init() {
 void orange_avoider_periodic() {
 	// Check the amount of orange. If this is above a threshold
 	// you want to turn a certain amount of degrees
-	safeToGoForwards = color_count < tresholdColorCount;
-	printf("Checking if this funciton is called %d treshold: %d now: %d \n", color_count, tresholdColorCount, safeToGoForwards);
+	safeToGoForwards = (
+		(  (lcnt < tresholdOrange_lcnt)    // left sector orange count
+		&&(clcnt < tresholdOrange_clcnt)  // left centre sector orange count
+		&&(crcnt < tresholdOrange_crcnt)  // right centre sector orange count
+		&&(rcnt < tresholdOrange_rcnt) // right sector orange count
+		) &&
+		(
+		(avg_lcnt < tresholdavg_lcnt)
+		&&(avg_clcnt < tresholdavg_clcnt)
+		&&(avg_crcnt < tresholdavg_crcnt)
+		&&(avg_rcnt < tresholdavg_rcnt)
+		)		
+	 );  
+	printf("Save to go:%d \n avgleft= %3f, avgleftc= %3f, avgrightc= %3f, avgright= %3f \n oraleft %3f, oraleftc %3f, orarightc, %3f, oraright %3f \n", safeToGoForwards, avg_lcnt,avg_clcnt,avg_crcnt,avg_rcnt, lcnt, clcnt, crcnt, rcnt);
 }
 
 
