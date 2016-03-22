@@ -8,6 +8,7 @@ using namespace std;
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/videoio/videoio.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/opencv.hpp>
 using namespace cv;
 
 
@@ -15,13 +16,14 @@ int thresh = 200;
 int max_thresh = 255;
 const int MAX_COUNT = 500;
 
+Mat image,dst, dst_norm, dst_norm_scaled, prevImage, bgr, test;
 
 int opencv_example(char* img, int width, int height)
 {
 	// Create a new image, using the original bebop image.
 	Mat M(width,height, CV_8UC2, img);
 	vector<Point2f> points[2];
-	Mat image,dst, dst_norm, dst_norm_scaled, prevImage;
+	//Mat image,dst, dst_norm, dst_norm_scaled, prevImage;
 	dst = Mat::zeros( M.size(), CV_32FC1 );
 	TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
 
@@ -29,6 +31,8 @@ int opencv_example(char* img, int width, int height)
 	// If you want a color image, uncomment this line
 	// cvtColor(M, image, CV_YUV2RGB_Y422);
 	// For a grayscale image, use this one
+	//cvtColor(M, bgr, CV_YUV2RGB);
+	//cvtColor(bgr, test , COLOR_BGR2GRAY);
 	cvtColor(M, image, CV_YUV2GRAY_Y422);
 
 	// Blur it, because we can
@@ -67,7 +71,7 @@ int opencv_example(char* img, int width, int height)
 		{
 			vector<uchar> status;
 			vector<float> err;
-			calcOpticalFlowPyrLK(prevImage, image, points[0], points[1], status, err, winSize, 3, termcrit, 0, 0.001);
+			calcOpticalFlowPyrLK(prevImage, image, points[0], points[1], status, noArray(), winSize, 3, termcrit, 0, 0.001);
 			size_t i, k;
             for( i = k = 0; i < points[1].size(); i++ )
             {

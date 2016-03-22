@@ -67,7 +67,7 @@
 #endif
 
 #ifndef OPTICFLOW_WINDOW_SIZE
-#define OPTICFLOW_WINDOW_SIZE 10//20
+#define OPTICFLOW_WINDOW_SIZE 60//20//10
 #endif
 
 #ifndef OPTICFLOW_MAX_ITERATIONS
@@ -144,7 +144,7 @@ bool_t process_frame(struct image_t* img)
     }
   }
   
-  image_show_points(img, corners, result.corner_cnt);
+  //image_show_points(img, corners, result.corner_cnt);
   
   int32_t debug = result.corner_cnt;
   int32_t debug_tr = opticflow.fast9_threshold;
@@ -157,7 +157,7 @@ bool_t process_frame(struct image_t* img)
  
  //int32_t debug = img->h;
   
-  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
+ // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
   
   
   // Check if we found some corners to track
@@ -177,11 +177,13 @@ bool_t process_frame(struct image_t* img)
                                        opticflow.window_size / 2, opticflow.subpixel_factor, opticflow.max_iterations,
                                        opticflow.threshold_vec, opticflow.max_track_corners);
 
-  //image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
+  image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
   
-  //int32_t vector_debug = vectors[0].flow_x;
+  int32_t vector_debug = vectors[0].flow_x;
   
   //stateGetPositionEnu_f()->x;
+  
+  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
 
  // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug);
  
