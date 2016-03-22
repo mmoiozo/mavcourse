@@ -348,7 +348,7 @@ bool_t colorfilter_func(struct image_t* img)
       color_cr_min,color_cr_max, &lcnt, &clcnt, &crcnt ,&rcnt, &avg_lcnt, &avg_clcnt, &avg_crcnt ,&avg_rcnt
       );
 
-	DOWNLINK_SEND_EXT_COLORFILTER(DefaultChannel, DefaultDevice, &color_count);
+	//DOWNLINK_SEND_EXT_COLORFILTER(DefaultChannel, DefaultDevice, &color_count);
   return FALSE;
 }
 

@@ -864,7 +864,10 @@
   </message>
 
 
-  <!--108 is free -->
+  <message name="EXT_COLORFILTER" id="108">
+    <field name="color_count" type="int32"/>
+   <!-- <filed name="color_countleft" type="int32"/> -->
+  </message>
 
   <message name="MULTIGAZE_METERS" id="109">
     <field name="multigaze_meters" type="float[]"/>
