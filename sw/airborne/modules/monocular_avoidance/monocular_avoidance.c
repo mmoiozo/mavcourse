@@ -51,7 +51,7 @@
 
 
 #ifndef OPTICFLOW_FAST9_THRESHOLD
-#define OPTICFLOW_FAST9_THRESHOLD 30//10//20//5
+#define OPTICFLOW_FAST9_THRESHOLD 20//30//10//20//5
 #endif
 
 #ifndef OPTICFLOW_FAST9_MIN_DISTANCE
@@ -67,7 +67,7 @@
 #endif
 
 #ifndef OPTICFLOW_WINDOW_SIZE
-#define OPTICFLOW_WINDOW_SIZE 60//20//10
+#define OPTICFLOW_WINDOW_SIZE 10//60//20//10
 #endif
 
 #ifndef OPTICFLOW_MAX_ITERATIONS
@@ -167,25 +167,37 @@ bool_t process_frame(struct image_t* img)
     return FALSE;
   }
   
+   int32_t vector_debug = 0;
+  
   // *************************************************************************************
   // Corner Tracking
   // *************************************************************************************
 
   // Execute a Lucas Kanade optical flow
   result.tracked_cnt = result.corner_cnt;
+  
   struct flow_t *vectors = opticFlowLK(&opticflow.img_gray, &opticflow.prev_img_gray, corners, &result.tracked_cnt,
                                        opticflow.window_size / 2, opticflow.subpixel_factor, opticflow.max_iterations,
                                        opticflow.threshold_vec, opticflow.max_track_corners);
 
   image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
   
-  int32_t vector_debug = vectors[0].flow_x;
+  
+  
+  for(int i = 0; i < sizeof(vectors);i++)
+  {
+  vector_debug += vectors[0].flow_x;
+  }
   
   //stateGetPositionEnu_f()->x;
   
   DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
 
  // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug);
+  
+  free(corners);
+  free(vectors);
+  image_switch(&opticflow.img_gray, &opticflow.prev_img_gray);
  
   return FALSE;
 }
