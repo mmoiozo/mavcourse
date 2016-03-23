@@ -51,7 +51,7 @@
 
 
 #ifndef OPTICFLOW_FAST9_THRESHOLD
-#define OPTICFLOW_FAST9_THRESHOLD 20//30//10//20//5
+#define OPTICFLOW_FAST9_THRESHOLD 10//30//10//20//5
 #endif
 
 #ifndef OPTICFLOW_FAST9_MIN_DISTANCE
@@ -67,11 +67,11 @@
 #endif
 
 #ifndef OPTICFLOW_WINDOW_SIZE
-#define OPTICFLOW_WINDOW_SIZE 10//60//20//10
+#define OPTICFLOW_WINDOW_SIZE 20//60//20//10
 #endif
 
 #ifndef OPTICFLOW_MAX_ITERATIONS
-#define OPTICFLOW_MAX_ITERATIONS 10//20
+#define OPTICFLOW_MAX_ITERATIONS 15//10//20
 #endif
 
 #ifndef OPTICFLOW_THRESHOLD_VEC
@@ -82,10 +82,11 @@
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
 #endif
 
+/*
 #ifndef OPTICFLOW_WINDOW_SIZE
 #define OPTICFLOW_WINDOW_SIZE 10
 #endif
-
+*/
 struct opticflow_result_t result;
 struct opticflow_t opticflow;
 
@@ -109,6 +110,11 @@ int32_t psi_temp = 0;
 int32_t x_temp = 0;
 int32_t y_temp = 0;
 int32_t z_temp = 0;
+
+//divergence
+float divergence = 0;
+float u = 0;
+float v = 0;
 
 
 bool_t process_frame(struct image_t* img);
@@ -167,7 +173,7 @@ bool_t process_frame(struct image_t* img)
     return FALSE;
   }
   
-   int32_t vector_debug = 0;
+  
   
   // *************************************************************************************
   // Corner Tracking
@@ -182,16 +188,20 @@ bool_t process_frame(struct image_t* img)
 
   image_show_flow(img, vectors, result.tracked_cnt, opticflow.subpixel_factor);
   
-  
-  
+  divergence = 0;
+  u = 0;
+  v = 0;
   for(int i = 0; i < sizeof(vectors);i++)
   {
-  vector_debug += vectors[0].flow_x;
+  u += vectors[i].flow_x;
+  v += vectors[i].flow_y;
+  float div = ((vectors[i].flow_x / (vectors[i].pos.x-136)) + (vectors[i].flow_y / (vectors[i].pos.y-136))) / 2;
+  if(div != INFINITY)divergence += div;
   }
   
   //stateGetPositionEnu_f()->x;
   
-  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug, &debug_tr, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
+  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &u, &v, &divergence, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
 
  // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug);
   

@@ -867,6 +867,9 @@
   <message name="MONOCULAR_AVOIDANCE" id="108">
     <field name="corner_count" type="int32"/>
     <field name="corner_treshold" type="int32"/>
+    <field name="total_u" type="float"/>
+    <field name="total_v" type="float"/>
+    <field name="divergence" type="float"/>
     <field name="phi"            type="int32" alt_unit="deg" alt_unit_coef="0.0139882"/>
     <field name="theta"          type="int32" alt_unit="deg" alt_unit_coef="0.0139882"/>
     <field name="psi"            type="int32" alt_unit="deg" alt_unit_coef="0.0139882"/>
