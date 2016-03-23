@@ -28,15 +28,20 @@ uint8_t color_cb_max  = 250;
 uint8_t color_cr_min  = 5;
 uint8_t color_cr_max  = 250;
 
+float floor_0=118.0;
+float floor_1=60.0;
+float floor_2=126.0;
+float floor_3=60.0;
+float floor_tol=0.05;
+float floor_tol2=0.2;
 //Tresholds for floor color
-float floor_0min = (1-0.005)*125;
-float floor_0max = (1+0.005)*125;
-float floor_1min = (1-0.005)*35;
-float floor_1max = (1+0.005)*35;
-float floor_2min = (1-0.005)*125;
-float floor_2max = (1+0.005)*125;
-float floor_3min = (1-0.005)*35;
-float floor_3max = (1+0.005)*35;
+
+
+float fh_u=0.2;  // upper free space
+float fh_l=0.2;  // lower free space
+float avg_tol = 0.01;  //Tolerance Factor for determing average pixels!
+float centre_width=0.5; //Set width of combined middle sectors
+
 
 float lcnt = 0;  //leftcount
 float clcnt = 0; //leftcentrecount
@@ -94,10 +99,12 @@ for(uint8_t j = 0; j <=3; j++)
   uint16_t w_max;
   uint16_t h_max;
   
-
-
-  float centre_width=0.75;
+  //float centre_width=0.5;
   float side_width=(1-centre_width)/2;
+  //fh_u=0.2;  // upper free space
+  //fh_l=0.2;  // lower free space
+
+
 
   // Copy the creation timestamp (stays the same)
   memcpy(&output->ts, &input->ts, sizeof(struct timeval));
@@ -108,6 +115,15 @@ for(uint8_t j = 0; j <=3; j++)
   uint8_t *source2 = input->buf;
   uint8_t *dest2 = output->buf;
 
+
+float floor_0min = (1-floor_tol)* floor_0;
+float floor_0max = (1+floor_tol)* floor_0;
+float floor_1min = (1-floor_tol2)* floor_1;
+float floor_1max = (1+floor_tol2)* floor_1;
+float floor_2min = (1-floor_tol)* floor_2;
+float floor_2max = (1+floor_tol)* floor_2;
+float floor_3min = (1-floor_tol2)* floor_3;
+float floor_3max = (1+floor_tol2)* floor_3;
   
   // Go trough all the pixels and sum up all pixel values
   for (uint16_t y = 0; y < (h_max); y++) { 
@@ -115,14 +131,22 @@ for(uint8_t j = 0; j <=3; j++)
 	
 	// Dont take gray pixels into account. Need to adjust the thresholds for gray floor
 	if (
-	(source2[0]<floor_0min || source2[0]>floor_0max) &&
-	(source2[1]<floor_1min || source2[1]>floor_1max) &&
-	(source2[2]<floor_2min || source2[2]>floor_2max) &&
-	(source2[3]<floor_3min || source2[3]>floor_3max))
-	{
+	(source2[0]>floor_0min && source2[0]<floor_0max) &&	 
+	(source2[2]>floor_2min && source2[2]<floor_2max) &&
+	(source2[1]>floor_1min && source2[1]<floor_1max) &&
+	(source2[3]>floor_3min && source2[3]<floor_3max) )
 	
+	{n_pixel_gray ++;
+			/*dest2[0] = 200;        // U
+			dest2[1] = source2[1];  // Y
+			dest2[2] = 100;        // V
+			dest2[3] = source2[3];  // Y  	*/
+
+	}
+	else
+	{	
 		/*for (uint8_t nn=0; nn<=3; nn++) {
-		if ((x>=((0.25*(nn))*w_max))&&(x<((0.25*(nn+1))*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) {
+		if ((x>=((0.25*(nn))*w_max))&&(x<((0.25*(nn+1))*w_max))&&(y>fh_u*h_max)&&(y<(1-0.3)*h_max)) {
 		img_prop[0][nn] += source2[0];
 		img_prop[1][nn] += source2[1];
 		img_prop[2][nn] += source2[2];
@@ -131,36 +155,37 @@ for(uint8_t j = 0; j <=3; j++)
 		n_pixel_avg[nn] ++; //
 		}
 		}*/
-		if ((x>=(0.15)*w_max)&&(x<(0.25*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { // sector left
+		if (x<(1.0*side_width*w_max)&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { // sector left
 		img_prop[0][0] += source2[0];
 		img_prop[0][1] += source2[1];
 		img_prop[0][2] += source2[2];
 		img_prop[0][3] += source2[3];
 		n_pixel_avg[0] ++; 
 		}
-		else if  ((x>=(0.25)*w_max)&&(x<(0.5*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { // sector left centre
+		else if  ((x>=(1.0*side_width*w_max))&&(x<(0.5*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { // sector left centre
 		img_prop[1][0] += source2[0];
 		img_prop[1][1] += source2[1];
 		img_prop[1][2] += source2[2];
 		img_prop[1][3] += source2[3];
 		n_pixel_avg[1] ++; 
 		}
-		else if  ((x>=(0.5)*w_max)&&(x<(0.75*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { // sector right centre
+		else if  ((x>=(0.5)*w_max)&&(x<((1-side_width)*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { // sector right centre
 		img_prop[2][0] += source2[0];
 		img_prop[2][1] += source2[1];
 		img_prop[2][2] += source2[2];
 		img_prop[2][3] += source2[3];
 		n_pixel_avg[2] ++;
 		}
-		else if  ((x>=(0.75)*w_max)&&(x<(0.85*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { // sector right 
+		else if  ((x>=(1-side_width)*w_max)&&(x<(1.0*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { // sector right 
 		img_prop[3][0] += source2[0];
 		img_prop[3][1] += source2[1];
 		img_prop[3][2] += source2[2];
 		img_prop[3][3] += source2[3];
 		n_pixel_avg[3] ++;
 		}
+		
 	}
-	else 	{n_pixel_gray ++;}
+		
       dest2 += 4;
       source2 += 4;
     
@@ -174,78 +199,78 @@ for (uint8_t nn=0; nn<=3; nn++) {
   avg_img_prop[nn][3] = (1.0*img_prop[nn][3])/(1.0*n_pixel_avg[nn]);
 }
   
- 
+ printf("avgimg0 %3f, avgimg1 %3f, avgimg2 %3f, avgimg3 %3f ", avg_img_prop[1][0], avg_img_prop[1][1], avg_img_prop[1][2], avg_img_prop[1][3]);
 
 //-----------------------Count pixels (Average,Orange)---------------------------------------------------
   uint8_t *source = input->buf;
   uint8_t *dest = output->buf;
   
-  float avg_tol = 0.1;  //Tolerance Factor for determing average pixels!
+  //float avg_tol = 0.1;  //Tolerance Factor for determing average pixels!
 
   // Go trough all the pixels
   for (uint16_t y = 0; y < (h_max); y++) { 
     for (uint16_t x = 0; x < (w_max); x += 2) {
 	
-	if ((x>=(0.15)*w_max)&&(x<(0.25*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { //
+	if (x<(1.0*side_width*w_max)&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { //
 	// Check if the deviation of the color from the average is within a certain range
 	     if(	(((float)dest[0] >= (1.0-avg_tol)*avg_img_prop[0][0])&& ((float)dest[0] <= (1.0+avg_tol)*avg_img_prop[0][0]))
 		&& 	(((float)dest[1] >= (1.0-2.0*avg_tol)*avg_img_prop[0][1])&& ((float)dest[1] <= (1.0+2.0*avg_tol)*avg_img_prop[0][1]))
 		&&	(((float)dest[2] >= (1.0-avg_tol)*avg_img_prop[0][2])&& ((float)dest[2] <= (1.0+avg_tol)*avg_img_prop[0][2]))
 		&&	(((float)dest[3] >= (1.0-2.0*avg_tol)*avg_img_prop[0][3])&& ((float)dest[3] <= (1.0+2.0*avg_tol)*avg_img_prop[0][3]))
 		){
-			/*dest[0] = 200;         // U
+			dest[0] = 200;         // U
 			dest[1] = source[1];  // Y
 			dest[2] = 120;       // V
-			dest[3] = source[3]; */ // Y
+			dest[3] = source[3];  // Y 
 			avg_count[0] ++;
 		}}
 		
-	else if ((x>=(0.25)*w_max)&&(x<(0.5*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { //
+	else if ((x>=(1.0*side_width*w_max))&&(x<(0.5*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { //
 	// Check if the deviation of the color from the average is within a certain range
 	     if(	(((float)dest[0] >= (1.0-avg_tol)*avg_img_prop[1][0])&& ((float)dest[0] <= (1.0+avg_tol)*avg_img_prop[1][0]))
 		&& 	(((float)dest[1] >= (1.0-2.0*avg_tol)*avg_img_prop[1][1])&& ((float)dest[1] <= (1.0+2.0*avg_tol)*avg_img_prop[1][1]))
 		&&	(((float)dest[2] >= (1.0-avg_tol)*avg_img_prop[1][2])&& ((float)dest[2] <= (1.0+avg_tol)*avg_img_prop[1][2]))
 		&&	(((float)dest[3] >= (1.0-2.0*avg_tol)*avg_img_prop[1][3])&& ((float)dest[3] <= (1.0+2.0*avg_tol)*avg_img_prop[1][3]))
 		){
-			/*dest[0] = 150;         // U
+			dest[0] = 150;         // U
 			dest[1] = source[1];  // Y
 			dest[2] = 80;       // V
-			dest[3] = source[3]; */ // Y
+			dest[3] = source[3];  // Y 
 			avg_count[1] ++;	
 		}}
-	else if ((x>=(0.5)*w_max)&&(x<(0.75*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { //
+	else if ((x>=(0.5)*w_max)&&(x<((1-side_width)*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { //
 	// Check if the deviation of the color from the average is within a certain range
 	     if(	(((float)dest[0] >= (1.0-avg_tol)*avg_img_prop[2][0])&& ((float)dest[0] <= (1.0+avg_tol)*avg_img_prop[2][0]))
 		&& 	(((float)dest[1] >= (1.0-2.0*avg_tol)*avg_img_prop[2][1])&& ((float)dest[1] <= (1.0+2.0*avg_tol)*avg_img_prop[2][1]))
 		&&	(((float)dest[2] >= (1.0-avg_tol)*avg_img_prop[2][2])&& ((float)dest[2] <= (1.0+avg_tol)*avg_img_prop[2][2]))
 		&&	(((float)dest[3] >= (1.0-2.0*avg_tol)*avg_img_prop[2][3])&& ((float)dest[3] <= (1.0+2.0*avg_tol)*avg_img_prop[2][3]))
 		){
-			/*dest[0] = 80;         // U
+			dest[0] = 80;         // U
 			dest[1] = source[1];  // Y
 			dest[2] = 120;       // V
-			dest[3] = source[3]; */ // Y	
+			dest[3] = source[3]; // Y	
 			avg_count[2] ++;
 		}} 
-	else if ((x>=(0.75)*w_max)&&(x<(0.85*w_max))&&(y>0.2*h_max)&&(y<(1-0.3)*h_max)) { //
+	else if ((x>=(1-side_width)*w_max)&&(x<(1.0*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { //
 	// Check if the deviation of the color from the average is within a certain range
 	     if(	(((float)dest[0] >= (1.0-avg_tol)*avg_img_prop[3][0])&& ((float)dest[0] <= (1.0+avg_tol)*avg_img_prop[3][0]))
 		&& 	(((float)dest[1] >= (1.0-2.0*avg_tol)*avg_img_prop[3][1])&& ((float)dest[1] <= (1.0+2.0*avg_tol)*avg_img_prop[3][1]))
 		&&	(((float)dest[2] >= (1.0-avg_tol)*avg_img_prop[3][2])&& ((float)dest[2] <= (1.0+avg_tol)*avg_img_prop[3][2]))
 		&&	(((float)dest[3] >= (1.0-2.0*avg_tol)*avg_img_prop[3][3])&& ((float)dest[3] <= (1.0+2.0*avg_tol)*avg_img_prop[3][3]))
 		){
-			/*dest[0] = 100;         // U
+			dest[0] = 100;         // U
 			dest[1] = source[1];  // Y
 			dest[2] = 200;       // V
-			dest[3] = source[3];  */// Y	
+			dest[3] = source[3];  // Y	
 			avg_count[3] ++;
 		}} 
         else{}
 	
 	// Calculating all pixels considered in orange test
-	if ((x<side_width*w_max)) { n_pixel_orange[0] ++; }
-	else if ((x>=side_width*w_max) && (x<=0.5*w_max)) { n_pixel_orange[1] ++; }
-	else if ((x>0.5*w_max) && (x<=(1-side_width)*w_max)) { n_pixel_orange[2] ++; }
-	else { n_pixel_orange[3] ++; }
+	if (x<(1.0*side_width*w_max)&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { n_pixel_orange[0] ++; }
+	else if ((x>=(1.0*side_width*w_max))&&(x<(0.5*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max))  { n_pixel_orange[1] ++; }
+	else if ((x>=(0.5)*w_max)&&(x<((1-side_width)*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { n_pixel_orange[2] ++; }
+	else if ((x>=(1-side_width)*w_max)&&(x<(1.0*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { n_pixel_orange[3] ++; }
 	
 	
       // Check if the color is inside the specified values (for orange)
@@ -255,44 +280,44 @@ for (uint8_t nn=0; nn<=3; nn++) {
 		&& (dest[0] >= u_m)
 		&& (dest[0] <= u_M)
 		&& (dest[2] >= v_m)
-		&& (dest[2] <= v_M)
+		&& (dest[2] <= v_M) 
 	      ) {
-		if ((x<side_width*w_max)) {  //left sector
+		if (x<(1.0*side_width*w_max)&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) {  //left sector
 			cnt[0] ++;
 			// UYVY
-			dest[0] = 20;//64;        // U
+			/*dest[0] = 20;//64;        // U
 			dest[1] = source[1];  // Y
 			dest[2] = 180;        // V
-			dest[3] = source[3];  // Y
+			dest[3] = source[3];  // Y*/
 			}
 			
-		else if ((x>=side_width*w_max) && (x<=0.5*w_max)) { // middle left sector
+		else if ((x>=(1.0*side_width*w_max))&&(x<(0.5*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { // middle left sector
 			cnt[1] ++;
 			// UYVY
-			dest[0] = 120;        // U
+			/*dest[0] = 120;        // U
 			dest[1] = source[1];  // Y
 			dest[2] = 255;        // V
-			dest[3] = source[3];  // Y
+			dest[3] = source[3];  // Y*/
 			}
-                else if ((x>0.5*w_max) && (x<=(1-side_width)*w_max)) { // middle right sector
+                else if ((x>=(0.5)*w_max)&&(x<((1-side_width)*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { // middle right sector
 			cnt[2] ++;
 			// UYVY
-			dest[0] = 120;        // U
+			/*dest[0] = 120;        // U
 			dest[1] = source[1];  // Y
 			dest[2] = 10;        // V
-			dest[3] = source[3];  // Y
+			dest[3] = source[3];  // Y*/
 			}
-		else { //right sector
+		else if ((x>=(1-side_width)*w_max)&&(x<(1.0*w_max))&&(y>fh_u*h_max)&&(y<(1-fh_l)*h_max)) { //right sector
 			cnt[3] ++;
 			// UYVY
-			dest[0] = 200;        // U
+			/*dest[0] = 200;        // U
 			dest[1] = source[1];  // Y
 			dest[2] = 100;        // V
-			dest[3] = source[3];  // Y
+			dest[3] = source[3];  // Y*/
 			} 		
 
 	      } else {
-		// UYVY
+		/*// UYVY
 		char u = source[0] - 127;
 		u /= 4;
 		dest[0] = 127;        // U
@@ -300,7 +325,7 @@ for (uint8_t nn=0; nn<=3; nn++) {
 		u = source[2] - 127;
 		u /= 4;
 		dest[2] = 127;        // V
-		dest[3] = source[3];  // Y
+		dest[3] = source[3];  // Y*/
 	      }
 	
       // Go to the next 2 pixels
@@ -348,7 +373,7 @@ bool_t colorfilter_func(struct image_t* img)
       color_cr_min,color_cr_max, &lcnt, &clcnt, &crcnt ,&rcnt, &avg_lcnt, &avg_clcnt, &avg_crcnt ,&avg_rcnt
       );
 
-	//DOWNLINK_SEND_EXT_COLORFILTER(DefaultChannel, DefaultDevice, &color_count);
+	DOWNLINK_SEND_EXT_COLORFILTER(DefaultChannel, DefaultDevice, &color_count);
   return FALSE;
 }
 
