@@ -191,15 +191,23 @@ bool_t process_frame(struct image_t* img)
   divergence = 0;
   u = 0;
   v = 0;
-  for(int i = 0; i < sizeof(vectors);i++)
+  for(int i = 0; i < result.corner_cnt;i++)
   {
   u += vectors[i].flow_x;
   v += vectors[i].flow_y;
   float div = ((vectors[i].flow_x / (vectors[i].pos.x-136)) + (vectors[i].flow_y / (vectors[i].pos.y-136))) / 2;
-  if(div != INFINITY)divergence += div;
+  //if(div != INFINITY)divergence += div;
+  //divergence += div;
   }
-  
+  u /= result.corner_cnt;
+  v /= result.corner_cnt;
+  //debug_tr = sizeof(vectors);
   //stateGetPositionEnu_f()->x;
+  
+  //paparazi divergence
+  int n_samples = 100;
+  //float  size_divergence = get_size_divergence(vectors, result->tracked_cnt, n_samples);
+  
   
   DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &u, &v, &divergence, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
 
