@@ -95,6 +95,7 @@ struct opticflow_t opticflow;
 
 
 // Filter Settings
+/*
 uint8_t color_lum_min = 5;
 uint8_t color_lum_max = 205;
 uint8_t color_cb_min  = 5;
@@ -103,7 +104,7 @@ uint8_t color_cr_min  = 5;
 uint8_t color_cr_max  = 230;
 
 int color_count = 0;
-
+*/
 //Attitude
 int32_t phi_temp = 0;
 int32_t theta_temp = 0;
