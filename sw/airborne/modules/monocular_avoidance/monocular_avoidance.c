@@ -49,9 +49,12 @@
 #include "math/pprz_algebra_double.h"
 #include "subsystems/gps/gps_datalink.h"
 
+//divergence
+#include "modules/computer_vision/opticflow/size_divergence.h"
+
 
 #ifndef OPTICFLOW_FAST9_THRESHOLD
-#define OPTICFLOW_FAST9_THRESHOLD 40//30//10//20//5
+#define OPTICFLOW_FAST9_THRESHOLD 20//30//10//20//5
 #endif
 
 #ifndef OPTICFLOW_FAST9_MIN_DISTANCE
@@ -67,7 +70,7 @@
 #endif
 
 #ifndef OPTICFLOW_WINDOW_SIZE
-#define OPTICFLOW_WINDOW_SIZE 30//60//20//10
+#define OPTICFLOW_WINDOW_SIZE 40//60//20//10
 #endif
 
 #ifndef OPTICFLOW_MAX_ITERATIONS
@@ -137,7 +140,7 @@ bool_t process_frame(struct image_t* img)
 
   // FAST corner detection (TODO: non fixed threshold)
   struct point_t *corners = fast9_detect(img, OPTICFLOW_FAST9_THRESHOLD, OPTICFLOW_FAST9_MIN_DISTANCE,
-                                         20, 20, &result.corner_cnt);
+                                         50, 50, &result.corner_cnt);
   
   // Adaptive threshold
   if (opticflow.fast9_adaptive) {
@@ -191,25 +194,39 @@ bool_t process_frame(struct image_t* img)
   divergence = 0;
   u = 0;
   v = 0;
+  float div = 0;
+  float x_prev = 0;
+  float y_prev = 0;
   for(int i = 0; i < result.tracked_cnt;i++)
   {
   u += vectors[i].flow_x;
   v += vectors[i].flow_y;
-  float div = ((vectors[i].flow_x / (vectors[i].pos.x-136)) + (vectors[i].flow_y / (vectors[i].pos.y-136))) / 2;
-  //if(div != INFINITY)divergence += div;
+  
+   x_prev = ((vectors[i].pos.x/opticflow.subpixel_factor) - 136);
+   y_prev = ((vectors[i].pos.y/opticflow.subpixel_factor) - 136);
+  
+  div = (((vectors[i].flow_x/opticflow.subpixel_factor) / x_prev) + ((vectors[i].flow_y/opticflow.subpixel_factor) / y_prev)) / 2;
+  //if(div != INFINITY && div != NAN)divergence += div;
+  if((x_prev > 0.00001 || x_prev < -0.00001)&&(y_prev > 0.00001 || y_prev < -0.00001))divergence += div;
   //divergence += div;
   }
+  if(result.tracked_cnt>0)
+  {
   u = u / result.tracked_cnt;
   v = v / result.tracked_cnt;
-  //debug_tr = sizeof(vectors);
+  }
   //stateGetPositionEnu_f()->x;
   
   //paparazi divergence
-  int n_samples = 100;
-  //float  size_divergence = get_size_divergence(vectors, result->tracked_cnt, n_samples);
+  int n_samples = 0;//100;
+  float  size_divergence = get_size_divergence(vectors, result.tracked_cnt, n_samples);
+  float focus_x = 0;
+  float focus_y = 0;
+  
+  //focus_of_expansion(vectors,&focus_x,&focus_y,result.tracked_cnt);
   
   
-  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &u, &v, &divergence, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
+  DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &debug, &debug_tr, &u, &v, &div, &phi_temp, &theta_temp, &psi_temp, &x_temp, &y_temp, &z_temp);
 
  // DOWNLINK_SEND_MONOCULAR_AVOIDANCE(DefaultChannel, DefaultDevice, &vector_debug);
   
@@ -252,4 +269,76 @@ bool_t process_frame(struct image_t* img)
   
 }
 
+void focus_of_expansion(struct flow_t *vectors, float *foe_x, float *foe_y, uint16_t points_cnt)
+{
+		float a_1 = 0;
+		float a_2 = 0;
+		float a_3 = 0;
+		float a_4 = 0;
+		float f_1 = 0;
+		float f_2 = 0;
+
+		for (int i = 0; i < points_cnt; i++) {
+
+			float x_div = (float)vectors[i].flow_x;
+			float prev_corner_x = (float)vectors[i].pos.x;
+
+			//A matrix and f vector elements for least squares
+			a_1 += 1;
+			a_2 += prev_corner_x;
+			a_3 += prev_corner_x;
+			a_4 += prev_corner_x*prev_corner_x;
+			f_1 += x_div;
+			f_2 += x_div*prev_corner_x;
+			
+		}
+
+		//elements of B = A^-1
+		float det = (a_1*a_4) - (a_2*a_3);
+		float b_1 = a_4 / det;
+		float b_2 = -a_2 / det;
+		float b_3 = -a_3 / det;
+		float b_4 = a_1 / det;
+
+		float b = f_1*b_1 + f_2*b_2;
+		float a = f_1*b_3 + f_2*b_4;
+
+		*foe_x = (-b / a)/10;
+		
+		 a_1 = 0;
+		 a_2 = 0;
+		 a_3 = 0;
+		 a_4 = 0;
+		 f_1 = 0;
+		 f_2 = 0;
+
+		for (int i = 0; i < points_cnt; i++) {
+
+			float y_div = (float)vectors[i].flow_y;
+			float prev_corner_y = (float)vectors[i].pos.y;
+
+			//A matrix and f vector elements for least squares
+			a_1 += 1;
+			a_2 += prev_corner_y;
+			a_3 += prev_corner_y;
+			a_4 += prev_corner_y*prev_corner_y;
+			f_1 += y_div;
+			f_2 += y_div*prev_corner_y;
+			
+		}
+
+		//elements of B = A^-1
+		 det = (a_1*a_4) - (a_2*a_3);
+		 b_1 = a_4 / det;
+		 b_2 = -a_2 / det;
+		 b_3 = -a_3 / det;
+		 b_4 = a_1 / det;
+
+		 b = f_1*b_1 + f_2*b_2;
+		 a = f_1*b_3 + f_2*b_4;
+
+		*foe_y = (-b / a)/10;
+  
+  
+}
 
