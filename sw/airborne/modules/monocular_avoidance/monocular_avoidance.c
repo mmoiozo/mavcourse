@@ -191,7 +191,7 @@ bool_t process_frame(struct image_t* img)
   divergence = 0;
   u = 0;
   v = 0;
-  for(int i = 0; i < result.corner_cnt;i++)
+  for(int i = 0; i < result.tracked_cnt;i++)
   {
   u += vectors[i].flow_x;
   v += vectors[i].flow_y;
@@ -199,8 +199,8 @@ bool_t process_frame(struct image_t* img)
   //if(div != INFINITY)divergence += div;
   //divergence += div;
   }
-  u /= result.corner_cnt;
-  v /= result.corner_cnt;
+  u = u / result.tracked_cnt;
+  v = v / result.tracked_cnt;
   //debug_tr = sizeof(vectors);
   //stateGetPositionEnu_f()->x;
   
